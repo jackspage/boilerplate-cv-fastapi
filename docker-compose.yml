@@ -1,0 +1,35 @@
+version: '3'
+
+services:
+  frontend:
+    build: frontend
+    ports:
+      - 8501:8501
+    depends_on:
+      - backend
+    volumes:
+        - ./storage:/storage
+
+  backend:
+    build: backend
+    ports:
+      - 8080:8080
+    volumes:
+      - ./storage:/storage
+    environment:
+      - DATABASE_URL=postgresql://cv-api:cv-api@db/cv_api_dev
+
+
+  db:
+    image: postgres:12.1-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    expose:
+      - 5432
+    environment:
+      - POSTGRES_USER=cv-api
+      - POSTGRES_PASSWORD=cv-api
+      - POSTGRES_DB=cv_api_dev
+
+volumes:
+  postgres_data:

@@ -2,15 +2,18 @@ version: '3'
 
 services:
   frontend:
+    container_name: frontend
     build: frontend
     ports:
       - 8501:8501
     depends_on:
       - backend
     volumes:
-        - ./storage:/storage
+      - ./storage:/storage
 
   backend:
+    image: backend:latest
+    container_name: backend
     build: backend
     ports:
       - 8080:8080
@@ -18,9 +21,13 @@ services:
       - ./storage:/storage
     environment:
       - DATABASE_URL=postgresql://cv-api:cv-api@db/cv_api_dev
-
+    depends_on:
+      - redis
+    links:
+      - redis
 
   db:
+    container_name: postgresql_db
     image: postgres:12.1-alpine
     volumes:
       - postgres_data:/var/lib/postgresql/data/
@@ -30,6 +37,35 @@ services:
       - POSTGRES_USER=cv-api
       - POSTGRES_PASSWORD=cv-api
       - POSTGRES_DB=cv_api_dev
+
+  redis:
+    container_name: redis-db
+    image: redis:4.0.6-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./redis:/data
+
+  task_worker:
+    container_name: redis-worker
+    image: backend:latest
+    command: rq worker --url redis://redis:6379 my_queue
+    depends_on:
+      - redis
+    links:
+      - redis
+    volumes:
+      - ./storage:/storage
+
+  dashboard:
+    build: dashboard
+    image: dashboard
+    container_name: dashboard
+    ports:
+      - 9181:9181
+    command: rq-dashboard -H redis
+    depends_on:
+      - redis
 
 volumes:
   postgres_data:

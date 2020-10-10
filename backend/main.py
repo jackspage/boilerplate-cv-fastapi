@@ -1,12 +1,15 @@
 # backend/main.py
 
-import uvicorn
+from typing import Optional
 
+import uvicorn
 from fastapi import FastAPI
 
 from api import notes
 import api.utils as utils
 import api.upload as upload
+from task import task_queue
+# from task import run_task, run_task_worker
 from database.db import engine, metadata, database
 
 metadata.create_all(engine)
@@ -17,14 +20,17 @@ def create_application() -> FastAPI:
     application.include_router(utils.router, prefix='/transfer/{style}', tags=["styles"])
     application.include_router(upload.router, prefix='/upload', tags=["upload"])
     application.include_router(notes.router, prefix="/notes", tags=["notes"])
+    application.include_router(task_queue.router, prefix="/run_task", tags=["tasks"])
     return application
 
 
 app = create_application()
 
+
 @app.get("/")
 def read_root():
     return {"message": "Welcome from the API"}
+
 
 @app.on_event("startup")
 async def startup():

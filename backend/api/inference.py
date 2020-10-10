@@ -1,11 +1,34 @@
-# backend/inference.py
+import time
+import uuid
+import logging
 
+from fastapi import File
+from fastapi import UploadFile
+from fastapi import APIRouter, HTTPException
+from redis import Redis
+from rq import Queue
+
+# import api.inference as inference
 import api.config as config
 import cv2
+import numpy as np
+from PIL import Image
+
+router = APIRouter()
+
+gunicorn_error_logger = logging.getLogger("gunicorn.error")
+logging.root.handlers.extend(gunicorn_error_logger.handlers)
+logging.root.setLevel(gunicorn_error_logger.level)
+logger = logging.getLogger(__name__)
+
+redis_conn = Redis(host='redis', port=6379, db=0)
+q = Queue('inference', connection=redis_conn)
 
 
-def inference(model, image):
-    model_name = f"{config.MODEL_PATH}{model}.t7"
+def inference(image_uuid, style, file):
+    image = np.array(Image.open(file.file))
+
+    model_name = f"{config.MODEL_PATH}{style}.t7"
     model = cv2.dnn.readNetFromTorch(model_name)
 
     height, width = int(image.shape[0]), int(image.shape[1])
@@ -37,4 +60,20 @@ def inference(model, image):
     output[2] += 123.68
 
     output = output.transpose(1, 2, 0)
+    name = f"/storage/{image_uuid}_{style}.jpg"
+    cv2.imwrite(name, output)
+
     return output, resized_image
+
+
+@router.post("/")
+async def get_image(file: UploadFile = File(...)):
+    image_uuid = str(uuid.uuid4())
+    models = config.STYLES.copy()
+    task_ids = []
+
+    for model in models:
+        task = q.enqueue(inference, image_uuid=image_uuid, style=models[model], file=file)
+        task_ids.append(task.get_id())
+
+    return {"image_uuid": image_uuid}

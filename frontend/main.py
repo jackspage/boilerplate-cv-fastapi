@@ -26,14 +26,11 @@ st.title("Style transfer web app")
 # displays a file uploader widget
 image = st.file_uploader("Choose an image")
 
-# # displays the select widget for the styles
-style = st.selectbox("Choose the style", [i for i in STYLES.keys()])
-
 if st.button("Style Transfer"):
-    if image is not None and style is not None:
+    if image is not None:
+        st.write("Generate models!")
         files = {"file": image.getvalue()}
-        st.write(style)
-        res = requests.post(f"http://backend:8080/transfer/{style}", files=files)
+        res = requests.post(f"http://backend:8080/transfer", files=files)
 
         # Display unmodified picture
         res_original = requests.post(f"http://backend:8080/upload", files=files)
@@ -41,21 +38,15 @@ if st.button("Style Transfer"):
         image_original = Image.open(img_path_original.get("filename")).convert('RGB')
         st.image(image_original)
 
-        img_path = res.json()
-        image = Image.open(img_path.get("name"))
-        st.image(image)
-
-        displayed_styles = [style]
-        displayed = 1
+        displayed_styles = []
+        displayed = 0
         total = len(STYLES)
 
-        st.write("Generating other models...")
-
         while displayed < total:
-            for style in STYLES:
+            for style in STYLES.values():
                 if style not in displayed_styles:
                     try:
-                        path = f"{img_path.get('name').split('.')[0]}_{STYLES[style]}.jpg"
+                        path = f"/storage/{res.json().get('image_uuid')}_{style}.jpg"
                         image = Image.open(path)
                         st.image(image, width=500)
                         time.sleep(1)

@@ -49,13 +49,14 @@ services:
   task_worker:
     container_name: redis-worker
     image: backend:latest
-    command: rq worker --url redis://redis:6379 my_queue
+    command: rq worker --url redis://redis:6379 inference
     depends_on:
       - redis
     links:
       - redis
     volumes:
       - ./storage:/storage
+      - ./backend/models:/models
 
   dashboard:
     build: dashboard

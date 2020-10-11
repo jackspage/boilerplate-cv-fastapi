@@ -34,6 +34,7 @@ def inference(image_uuid, style, file):
     height, width = int(image.shape[0]), int(image.shape[1])
     new_width = int((640 / height) * width)
     resized_image = cv2.resize(image, (new_width, 640), interpolation=cv2.INTER_AREA)
+    resized_image = cv2.cvtColor(resized_image, cv2.COLOR_BGR2RGB)
 
     # Create our blob from the image
     # Then perform a forward pass run of the network

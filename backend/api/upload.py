@@ -19,6 +19,7 @@ async def upload_image(file: UploadFile = File(...)):
     height, width = int(image.shape[0]), int(image.shape[1])
     new_width = int((640 / height) * width)
     resized_image = cv2.resize(image, (new_width, 640), interpolation=cv2.INTER_AREA)
+    resized_image = cv2.cvtColor(resized_image, cv2.COLOR_BGR2RGB)
     name = f"/storage/CHECK_THIS_OUT{str(uuid.uuid4())}.jpg"
     cv2.imwrite(name, resized_image)
     return {"filename": name}

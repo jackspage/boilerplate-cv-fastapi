@@ -1,0 +1,7 @@
+/storage
+.idea/misc.xml
+/venv
+/backend/models/*.t7
+/redis
+*.rdb
+redis

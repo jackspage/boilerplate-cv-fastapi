@@ -57,6 +57,10 @@ services:
     volumes:
       - ./storage:/storage
       - ./backend/models:/models
+      - ./backend/api/:/api
+      - ./backend/database/:/database
+    environment:
+      - DATABASE_URL=postgresql://cv-api:cv-api@db/cv_api_dev
 
   dashboard:
     build: dashboard

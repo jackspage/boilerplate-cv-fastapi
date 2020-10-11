@@ -1,18 +1,21 @@
 import time
 import uuid
 import logging
+import os
 
 from fastapi import File
 from fastapi import UploadFile
 from fastapi import APIRouter, HTTPException
 from redis import Redis
 from rq import Queue
-
-# import api.inference as inference
-import api.config as config
 import cv2
 import numpy as np
 from PIL import Image
+from sqlalchemy import create_engine
+
+import api.config as config
+from api.models import InferenceResultsSchema
+from database.db import database, inference_results
 
 router = APIRouter()
 
@@ -23,6 +26,10 @@ logger = logging.getLogger(__name__)
 
 redis_conn = Redis(host='redis', port=6379, db=0)
 q = Queue('inference', connection=redis_conn)
+
+DATABASE_URL = os.getenv("DATABASE_URL")
+engine = create_engine(DATABASE_URL)
+connection = engine.connect()
 
 
 def inference(image_uuid, style, file):
@@ -63,6 +70,14 @@ def inference(image_uuid, style, file):
     output = output.transpose(1, 2, 0)
     name = f"/storage/{image_uuid}_{style}.jpg"
     cv2.imwrite(name, output)
+
+    query = inference_results.insert().values(
+        image_uuid=image_uuid,
+        model=style,
+        path_name=name
+    )
+    # database.execute(query=query)
+    connection.execute(query)
 
     return True
 

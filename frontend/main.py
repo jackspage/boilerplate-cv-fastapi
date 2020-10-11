@@ -4,6 +4,7 @@ import uuid
 
 import requests
 import streamlit as st
+from streamlit_cropper import st_cropper
 from PIL import Image
 
 STYLES = {
@@ -25,6 +26,17 @@ st.title("Style transfer web app")
 
 # displays a file uploader widget
 image = st.file_uploader("Choose an image")
+
+if image:
+    img = Image.open(image)
+    cropped_img = st_cropper(img, realtime_update=True, box_color="#E4E39E")
+
+    # Manipulate cropped image at will
+    st.write("Preview")
+    _ = cropped_img.thumbnail((500, 500))
+    st.image(cropped_img)
+    #TODO: NEED TO CONVERT THE CROPPED IMAGE SOMEHOW. THE PIPELINE WORKS NOW FOR IMAGE FILES.
+
 
 if st.button("Style Transfer"):
     if image is not None:

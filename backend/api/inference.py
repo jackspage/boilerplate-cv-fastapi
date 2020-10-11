@@ -64,7 +64,7 @@ def inference(image_uuid, style, file):
     name = f"/storage/{image_uuid}_{style}.jpg"
     cv2.imwrite(name, output)
 
-    return output, resized_image
+    return True
 
 
 @router.post("/")
